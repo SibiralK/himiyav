@@ -1,0 +1,689 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Химические Флеш-карточки</title>
+    <style>
+        :root {
+            --primary: #6c5ce7;
+            --secondary: #a29bfe;
+            --accent: #fdcb6e;
+            --glass: rgba(255, 255, 255, 0.92);
+            --text: #2d3436;
+            --success: #00b894;
+            --danger: #d63031;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            /* Волшебный градиентный фон */
+            background: linear-gradient(-45deg, #ee7752, #e73c7e, #23a6d5, #23d5ab);
+            background-size: 400% 400%;
+            animation: gradientBG 15s ease infinite;
+            color: var(--text);
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        @keyframes gradientBG {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        /* Эффект волшебного блеска (частицы) */
+        .sparkle-container {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none;
+            z-index: -1;
+            overflow: hidden;
+        }
+        
+        .sparkle {
+            position: absolute;
+            background: white;
+            border-radius: 50%;
+            opacity: 0;
+            animation: sparkleAnim 3s infinite ease-in-out;
+            box-shadow: 0 0 10px 2px rgba(255, 255, 255, 0.8);
+        }
+
+        @keyframes sparkleAnim {
+            0% { transform: scale(0); opacity: 0; }
+            50% { transform: scale(1); opacity: 0.8; }
+            100% { transform: scale(0); opacity: 0; }
+        }
+
+        .container {
+            width: 100%;
+            max-width: 700px;
+            background: var(--glass);
+            backdrop-filter: blur(12px);
+            padding: 30px;
+            border-radius: 20px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.2), inset 0 0 20px rgba(255,255,255,0.5);
+            text-align: center;
+            border: 1px solid rgba(255,255,255,0.6);
+            position: relative;
+            z-index: 10;
+        }
+
+        h1, h2 { margin-top: 0; color: #2d3436; }
+        
+        input[type="text"], input[type="email"] {
+            width: 100%;
+            padding: 12px;
+            margin: 10px 0;
+            border: 2px solid #dfe6e9;
+            border-radius: 10px;
+            font-size: 16px;
+            box-sizing: border-box;
+            transition: border-color 0.3s;
+            background: rgba(255,255,255,0.8);
+        }
+        input:focus { border-color: var(--primary); outline: none; }
+
+        button {
+            background: linear-gradient(to right, var(--primary), var(--secondary));
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            font-size: 16px;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            width: 100%;
+            margin-top: 10px;
+            font-weight: bold;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.1);
+        }
+        button:hover { 
+            transform: translateY(-2px); 
+            box-shadow: 0 5px 15px rgba(108, 92, 231, 0.4);
+        }
+        button:disabled { background: #b2bec3; cursor: not-allowed; transform: none; }
+
+        .hidden { display: none !important; }
+
+        /* Teacher Screen */
+        .memo {
+            background: rgba(255,255,255,0.7);
+            padding: 15px;
+            border-radius: 10px;
+            font-size: 14px;
+            text-align: left;
+            margin-bottom: 20px;
+            line-height: 1.5;
+            border-left: 4px solid var(--primary);
+        }
+        .link-box {
+            word-break: break-all;
+            background: #f1f2f6;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+            font-family: monospace;
+            font-size: 12px;
+        }
+
+        /* Game Screen Layout */
+        .game-layout {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .flashcard-area {
+            flex: 2;
+            text-align: center;
+        }
+
+        .flashcard {
+            font-size: 42px;
+            font-weight: bold;
+            padding: 20px;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+            border: 2px solid var(--secondary);
+            color: var(--primary);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        /* Блеск на карточке */
+        .flashcard::before {
+            content: '';
+            position: absolute;
+            top: -50%; left: -50%;
+            width: 200%; height: 200%;
+            background: linear-gradient(to right, rgba(255,255,255,0) 0%, rgba(255,255,255,0.3) 50%, rgba(255,255,255,0) 100%);
+            transform: rotate(30deg);
+            animation: shine 3s infinite;
+        }
+        
+        @keyframes shine {
+            0% { transform: translateX(-100%) rotate(30deg); }
+            100% { transform: translateX(100%) rotate(30deg); }
+        }
+
+        /* Hourglass Timer */
+        .timer-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .hourglass {
+            width: 40px;
+            height: 60px;
+            border: 3px solid #2d3436;
+            border-radius: 5px;
+            position: relative;
+            background: rgba(255,255,255,0.5);
+            overflow: hidden;
+            box-shadow: 0 0 10px rgba(253, 203, 110, 0.5);
+        }
+        
+        .sand-top {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 50%;
+            background: var(--accent);
+            transform-origin: bottom;
+            transition: transform 1s linear;
+        }
+
+        .sand-bottom {
+            position: absolute;
+            bottom: 0; left: 0; width: 100%; height: 0%;
+            background: var(--accent);
+            transition: height 1s linear;
+        }
+
+        .hourglass::after {
+            content: '';
+            position: absolute;
+            top: 50%; left: -5px; right: -5px;
+            height: 3px;
+            background: #2d3436;
+            transform: translateY(-50%);
+        }
+
+        .options-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        .option-btn {
+            background: white;
+            border: 2px solid var(--primary);
+            color: var(--primary);
+            font-weight: 600;
+            padding: 15px;
+            transition: all 0.2s;
+        }
+        
+        .option-btn:hover {
+            background: #f8f9fa;
+        }
+        
+        .option-btn.selected {
+            background: var(--primary);
+            color: white;
+        }
+
+        .progress {
+            margin-bottom: 15px;
+            color: #636e72;
+            font-weight: bold;
+            letter-spacing: 1px;
+        }
+
+        /* Result Screen */
+        .result-score {
+            font-size: 48px;
+            font-weight: bold;
+            color: var(--primary);
+            margin: 20px 0;
+            text-shadow: 2px 2px 0px rgba(0,0,0,0.1);
+        }
+        .status-msg {
+            margin-top: 15px;
+            font-weight: bold;
+            padding: 10px;
+            border-radius: 8px;
+        }
+        .status-success { background: #dff9fb; color: var(--success); }
+        .status-error { background: #ff7675; color: white; }
+
+        @media (max-width: 600px) {
+            .game-layout { flex-direction: column; }
+            .hourglass { width: 30px; height: 45px; }
+            .options-grid { grid-template-columns: 1fr; }
+            .flashcard { font-size: 32px; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- Контейнер для блеска -->
+<div class="sparkle-container" id="sparkle-container"></div>
+
+<div class="container">
+    <!-- ЭКРАН УЧИТЕЛЯ -->
+    <div id="teacher-screen">
+        <h1>🧪 Лаборатория Учителя</h1>
+        <p>Тема: Классы неорганических соединений</p>
+        
+        <input type="email" id="teacher-key" placeholder="Ключ Web3Forms">
+        <input type="text" id="class-name" placeholder="Название класса (например, 8А)">
+        
+        <button onclick="generateLink()">Сделать ссылку для учеников</button>
+        
+        <div id="link-result" class="hidden">
+            <p>Готовая ссылка:</p>
+            <div class="link-box" id="final-link"></div>
+            <button onclick="copyLink()">Скопировать</button>
+            
+            <div class="memo">
+                <strong>Памятка:</strong><br>
+                1. Откройте web3forms.com и войдите под своей почтой.<br>
+                2. Создайте форму: название — ваш класс, сайт — localhost.<br>
+                3. Скопируйте ключ и вставьте его выше.<br>
+                4. Для другого класса нажмите кнопку ещё раз и поменяйте название.
+            </div>
+        </div>
+    </div>
+
+    <!-- ЭКРАН ВХОДА УЧЕНИКА -->
+    <div id="login-screen" class="hidden">
+        <h2 id="display-class-name"></h2>
+        <p>Введите ваше имя, чтобы начать эксперимат:</p>
+        <input type="text" id="student-name" placeholder="Имя Фамилия">
+        <button onclick="startGame()">Начать игру</button>
+        <p style="font-size: 12px; color: #636e72; margin-top: 20px;">
+            Правила: Вам покажут 20 случайных формул. На каждую дается 15 секунд. Выберите правильный класс соединения.
+        </p>
+    </div>
+
+    <!-- ЭКРАН ИГРЫ -->
+    <div id="game-screen" class="hidden">
+        <div class="progress">Карточка <span id="current-q">1</span> из <span id="total-q">20</span></div>
+        
+        <div class="game-layout">
+            <div class="flashcard-area">
+                <div class="flashcard" id="formula-display"></div>
+            </div>
+            
+            <div class="timer-area">
+                <div class="hourglass">
+                    <div class="sand-top" id="sand-top"></div>
+                    <div class="sand-bottom" id="sand-bottom"></div>
+                </div>
+                <div style="margin-top: 5px; font-size: 12px; font-weight: bold;">15 сек</div>
+            </div>
+        </div>
+
+        <div class="options-grid" id="options-container">
+            <!-- Кнопки генерируются JS -->
+        </div>
+    </div>
+
+    <!-- ЭКРАН РЕЗУЛЬТАТА -->
+    <div id="result-screen" class="hidden">
+        <h2>Эксперимент завершен!</h2>
+        <div class="result-score">
+            <span id="final-score">0</span> / <span id="max-score">0</span>
+        </div>
+        <p id="send-status" class="status-msg">Отправка результата...</p>
+    </div>
+</div>
+
+<script>
+    // --- КОНФИГУРАЦИЯ И ДАННЫЕ ---
+    const GAME_TITLE = "Химические Флеш-карточки";
+    const TOTAL_CARDS_TO_SHOW = 20;
+    const TIME_PER_CARD = 15; // секунд
+
+    // База из 30 веществ
+    const SUBSTANCES_DB = [
+        { formula: "HCl", class: "Кислота" },
+        { formula: "NaOH", class: "Основание" },
+        { formula: "CaO", class: "Оксид" },
+        { formula: "KNO₃", class: "Соль" },
+        { formula: "H₂SO₄", class: "Кислота" },
+        { formula: "Fe(OH)₃", class: "Основание" },
+        { formula: "CO₂", class: "Оксид" },
+        { formula: "NaCl", class: "Соль" },
+        { formula: "HNO₃", class: "Кислота" },
+        { formula: "Mg(OH)₂", class: "Основание" },
+        { formula: "SO₃", class: "Оксид" },
+        { formula: "CuSO₄", class: "Соль" },
+        { formula: "H₃PO₄", class: "Кислота" },
+        { formula: "LiOH", class: "Основание" },
+        { formula: "Al₂O₃", class: "Оксид" },
+        { formula: "BaCl₂", class: "Соль" },
+        { formula: "H₂S", class: "Кислота" },
+        { formula: "KOH", class: "Основание" },
+        { formula: "P₂O₅", class: "Оксид" },
+        { formula: "AgNO₃", class: "Соль" },
+        { formula: "HBr", class: "Кислота" },
+        { formula: "Ca(OH)₂", class: "Основание" },
+        { formula: "ZnO", class: "Оксид" },
+        { formula: "Na₂CO₃", class: "Соль" },
+        { formula: "HF", class: "Кислота" },
+        { formula: "Ba(OH)₂", class: "Основание" },
+        { formula: "SiO₂", class: "Оксид" },
+        { formula: "KMnO₄", class: "Соль" },
+        { formula: "H₂SiO₃", class: "Кислота" },
+        { formula: "Fe₂O₃", class: "Оксид" }
+    ];
+
+    const CLASSES_LIST = ["Кислота", "Основание", "Оксид", "Соль"];
+
+    // --- СОСТОЯНИЕ ---
+    let gameQuestions = [];
+    let currentQuestionIndex = 0;
+    let score = 0;
+    let timerInterval = null;
+    let timeLeft = 0;
+    let studentName = "";
+    let className = "";
+    let teacherKey = "";
+    let isAnswered = false;
+
+    // --- ИНИЦИАЛИЗАЦИЯ ---
+    window.onload = function() {
+        createSparkles();
+        const params = new URLSearchParams(location.search);
+        const keyParam = params.get("key");
+        const classParam = params.get("class");
+
+        if (keyParam && classParam) {
+            // Режим ученика
+            teacherKey = keyParam;
+            className = classParam;
+            showScreen('login-screen');
+            document.getElementById('display-class-name').textContent = "Класс: " + escapeHtml(className);
+        } else {
+            // Режим учителя
+            showScreen('teacher-screen');
+        }
+    };
+
+    function createSparkles() {
+        const container = document.getElementById('sparkle-container');
+        const count = 30; // Количество блесток
+        
+        for(let i=0; i<count; i++) {
+            const sparkle = document.createElement('div');
+            sparkle.className = 'sparkle';
+            
+            // Случайный размер
+            const size = Math.random() * 6 + 2;
+            sparkle.style.width = size + 'px';
+            sparkle.style.height = size + 'px';
+            
+            // Случайная позиция
+            sparkle.style.left = Math.random() * 100 + '%';
+            sparkle.style.top = Math.random() * 100 + '%';
+            
+            // Случайная задержка анимации
+            sparkle.style.animationDelay = Math.random() * 3 + 's';
+            sparkle.style.animationDuration = (Math.random() * 2 + 2) + 's';
+            
+            container.appendChild(sparkle);
+        }
+    }
+
+    // --- ЛОГИКА УЧИТЕЛЯ ---
+    function buildStudentLink(key, group) {
+        const url = new URL(location.href);
+        url.hash = "";
+        url.search = "";
+        url.searchParams.set("key", key.trim());
+        url.searchParams.set("class", group.trim());
+        return url.toString();
+    }
+
+    function generateLink() {
+        const key = document.getElementById('teacher-key').value;
+        const group = document.getElementById('class-name').value;
+        
+        if (!key || !group) {
+            alert("Пожалуйста, заполните ключ и название класса.");
+            return;
+        }
+
+        const link = buildStudentLink(key, group);
+        document.getElementById('final-link').textContent = link;
+        document.getElementById('link-result').classList.remove('hidden');
+    }
+
+    function copyLink() {
+        const text = document.getElementById('final-link').textContent;
+        navigator.clipboard.writeText(text).then(() => {
+            alert("Ссылка скопирована!");
+        });
+    }
+
+    // --- ЛОГИКА ИГРЫ ---
+    function startGame() {
+        const nameInput = document.getElementById('student-name');
+        if (!nameInput.value.trim()) {
+            alert("Пожалуйста, введите имя.");
+            return;
+        }
+        studentName = nameInput.value.trim();
+        
+        prepareQuestions();
+        
+        showScreen('game-screen');
+        loadQuestion();
+    }
+
+    function prepareQuestions() {
+        const shuffled = [...SUBSTANCES_DB].sort(() => 0.5 - Math.random());
+        gameQuestions = shuffled.slice(0, TOTAL_CARDS_TO_SHOW);
+        
+        document.getElementById('total-q').textContent = TOTAL_CARDS_TO_SHOW;
+    }
+
+    function loadQuestion() {
+        if (currentQuestionIndex >= gameQuestions.length) {
+            finishGame();
+            return;
+        }
+
+        isAnswered = false;
+        const q = gameQuestions[currentQuestionIndex];
+        
+        document.getElementById('current-q').textContent = currentQuestionIndex + 1;
+        document.getElementById('formula-display').textContent = q.formula;
+        
+        const container = document.getElementById('options-container');
+        container.innerHTML = '';
+        
+        const options = [...CLASSES_LIST].sort(() => 0.5 - Math.random());
+        
+        options.forEach(opt => {
+            const btn = document.createElement('button');
+            btn.className = 'option-btn';
+            btn.textContent = opt;
+            btn.onclick = () => handleAnswer(opt, btn);
+            container.appendChild(btn);
+        });
+
+        startTimer();
+    }
+
+    function startTimer() {
+        clearInterval(timerInterval);
+        timeLeft = TIME_PER_CARD;
+        updateHourglassVisual();
+        
+        timerInterval = setInterval(() => {
+            timeLeft--;
+            updateHourglassVisual();
+            
+            if (timeLeft <= 0) {
+                clearInterval(timerInterval);
+                handleTimeOut();
+            }
+        }, 1000);
+    }
+
+    function updateHourglassVisual() {
+        const percentage = (timeLeft / TIME_PER_CARD) * 100;
+        const sandTop = document.getElementById('sand-top');
+        const sandBottom = document.getElementById('sand-bottom');
+        
+        // Верхняя часть уменьшается (scaleY)
+        sandTop.style.transform = `scaleY(${percentage / 100})`;
+        
+        // Нижняя часть растет (height)
+        sandBottom.style.height = `${100 - percentage}%`;
+    }
+
+    function handleAnswer(selectedClass, btnElement) {
+        if (isAnswered) return;
+        isAnswered = true;
+        clearInterval(timerInterval);
+
+        const correctClass = gameQuestions[currentQuestionIndex].class;
+        
+        if (selectedClass === correctClass) {
+            score++;
+            btnElement.style.backgroundColor = "#00b894";
+            btnElement.style.color = "white";
+            btnElement.style.borderColor = "#00b894";
+        } else {
+            btnElement.style.backgroundColor = "#d63031";
+            btnElement.style.color = "white";
+            btnElement.style.borderColor = "#d63031";
+            
+            const buttons = document.querySelectorAll('.option-btn');
+            buttons.forEach(b => {
+                if (b.textContent === correctClass) {
+                    b.style.backgroundColor = "#00b894";
+                    b.style.color = "white";
+                }
+            });
+        }
+
+        setTimeout(nextQuestion, 1000);
+    }
+
+    function handleTimeOut() {
+        if (isAnswered) return;
+        isAnswered = true;
+        
+        const correctClass = gameQuestions[currentQuestionIndex].class;
+        const buttons = document.querySelectorAll('.option-btn');
+        buttons.forEach(b => {
+            if (b.textContent === correctClass) {
+                b.style.backgroundColor = "#00b894";
+                b.style.color = "white";
+            } else {
+                b.style.opacity = "0.5";
+            }
+        });
+
+        setTimeout(nextQuestion, 1500);
+    }
+
+    function nextQuestion() {
+        currentQuestionIndex++;
+        loadQuestion();
+    }
+
+    // --- ЗАВЕРШЕНИЕ И ОТПРАВКА ---
+    async function finishGame() {
+        showScreen('result-screen');
+        document.getElementById('final-score').textContent = score;
+        document.getElementById('max-score').textContent = TOTAL_CARDS_TO_SHOW;
+
+        const payload = {
+            key: teacherKey,
+            className: className,
+            studentName: studentName,
+            score: score,
+            maxScore: TOTAL_CARDS_TO_SHOW,
+            details: `Ученик ответил правильно на ${score} из ${TOTAL_CARDS_TO_SHOW} вопросов.`
+        };
+
+        try {
+            await sendResult(payload);
+            const statusEl = document.getElementById('send-status');
+            statusEl.textContent = "Результат отправлен учителю";
+            statusEl.classList.add('status-success');
+        } catch (error) {
+            console.error(error);
+            const statusEl = document.getElementById('send-status');
+            statusEl.textContent = "Ошибка отправки. Балл сохранен локально.";
+            statusEl.classList.add('status-error');
+        }
+    }
+
+    async function sendResult(payload) {
+       const response = await fetch("https://api.web3forms.com/submit", {
+         method: "POST",
+         headers: {
+           "Content-Type": "application/json",
+           "Accept": "application/json"
+         },
+         body: JSON.stringify({
+           access_key: payload.key,
+           subject: "Результат: " + payload.className + ", " + payload.studentName + " — " + payload.score + " из " + payload.maxScore,
+           from_name: GAME_TITLE,
+           name: payload.studentName,
+           message: [
+             "Класс: " + payload.className,
+             "Ученик: " + payload.studentName,
+             "Результат: " + payload.score + " из " + payload.maxScore,
+             "",
+             payload.details || ""
+           ].join("\n"),
+           botcheck: ""
+         })
+       });
+       let data = {};
+       try { data = await response.json(); } catch (error) { data = {}; }
+       if (!response.ok || data.success !== true) {
+         throw new Error(data.message || "Сервис не принял результат");
+       }
+     }
+
+    // --- УТИЛИТЫ ---
+    function showScreen(id) {
+        ['teacher-screen', 'login-screen', 'game-screen', 'result-screen'].forEach(s => {
+            document.getElementById(s).classList.add('hidden');
+        });
+        document.getElementById(id).classList.remove('hidden');
+    }
+
+    function escapeHtml(text) {
+        if (!text) return text;
+        return text
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
+    }
+</script>
+
+</body>
+</html>
